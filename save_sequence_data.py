@@ -122,7 +122,7 @@ def collect_hand_landmark_samples(
 
 
 if __name__ == "__main__":
-    label = "만나다"  # 테스트할 라벨
+    label = "안녕하세요"  # 테스트할 라벨
     collect_hand_landmark_samples(
         label=f"{label}",
         save_path=f"data/{label}_sequences.csv"
