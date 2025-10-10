@@ -6,7 +6,7 @@ import sys
 # 경로 설정
 preprocess_script = "preprocess_multiple_csv_lstm.py"
 train_script = "train_lstm_model.py"
-realtime_script = "realtime_predict_check.py"
+realtime_script = "realtime_predict_optimized.py"
 
 def run_script(script_path):
     print(f"\n🟢 실행 중: {script_path}")
