@@ -1,15 +1,20 @@
+import asyncio
 import cv2
 import mediapipe as mp
 import numpy as np
 from keras.models import load_model
 import joblib
 from collections import deque
+from livekit import proto_video, rtc
 from PIL import ImageFont, ImageDraw, Image
+import queue
 import threading
 import torch
 from transformers import T5ForConditionalGeneration, T5TokenizerFast as T5Tokenizer
 
 # --- 💡 설정값 (가장 중요한 부분!) ---
+SERVER_URL = "ws://127.0.0.1:7880"
+ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2aWRlbyI6eyJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZSwicm9vbSI6ImRldi1yb29tIiwiY2FuUHVibGlzaCI6ZmFsc2UsImNhblN1YnNjcmliZSI6dHJ1ZSwiY2FuUHVibGlzaERhdGEiOnRydWV9LCJzdWIiOiJzZXJ2ZXIiLCJpc3MiOiJkZXZrZXkiLCJuYmYiOjE3NTY4NjEyMDAsImV4cCI6NDkxMjUzNDgwMH0.gc8l4G3MtNqUUOICS-f5X1QL_v71eDkuuuKhx8C4wbA"
 # [수정] 데이터 추가 후 새로 훈련한 최신 모델 경로로 변경합니다.
 MODEL_PATH = "models/gesture_lstm_model_dual_v4.h5" 
 # [수정] preprocess 스크립트에서 저장한 파일명과 동일하게 맞춥니다.
@@ -117,17 +122,74 @@ def predict_gesture(sequence_data):
             
     is_predicting = False
 
+# --- LiveKit 루프 ---
+frame_queue = queue.Queue(maxsize=1)
+sentence_queue = asyncio.Queue()
+livekit_loop = None
+
+async def receive_from_livekit():
+    room = rtc.Room()
+
+    async def receive_frames(stream):
+        async for frame in stream:
+            converted_frame = frame.convert(proto_video.VideoBufferType.RGB24)
+            image = np.frombuffer(converted_frame.data, dtype=np.uint8)
+            image = image.reshape((converted_frame.height, converted_frame.width, 3))
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+            if frame_queue.full():
+                frame_queue.get_nowait()
+            frame_queue.put_nowait(image)
+
+    @room.on("track_subscribed")
+    def on_track_subscribed(track, publication, participant):
+        if participant.identity == "deaf" and track.kind == rtc.TrackKind.KIND_VIDEO:
+            video_stream = rtc.VideoStream(track)
+            asyncio.create_task(receive_frames(video_stream))
+
+    await room.connect(SERVER_URL, ACCESS_TOKEN)
+    asyncio.create_task(send_message_loop(room))
+    await asyncio.Future()
+
+async def send_message_loop(room):
+    while True:
+        sentence = await sentence_queue.get()
+        data = sentence.encode()
+
+        await room.local_participant.publish_data(data, destination_identities=["hearing"])
+
+def run_livekit_background():
+    global livekit_loop
+    livekit_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(livekit_loop)
+    livekit_loop.run_until_complete(receive_from_livekit())
+
 # --- 메인 루프 ---
-cap = cv2.VideoCapture(0)
-if not cap.isOpened():
-    print("❌ 카메라를 열 수 없습니다."); exit()
+mode = int(input("모드 선택 (1: 로컬 카메라, 2: 서버 모니터링) - "))
+if not 1 <= mode <= 2:
+    print("잘못된 입력입니다.")
+    exit()
+
+if mode == 1:
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("❌ 카메라를 열 수 없습니다."); exit()
+elif mode == 2:
+    threading.Thread(target=run_livekit_background, daemon=True).start()
 
 print("▶ 실시간 수어 번역을 시작합니다. ('q': 종료, '스페이스바': 초기화)")
 frame_count = 0
 
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret: break
+while True:
+    if mode == 1:
+        if not cap.isOpened(): break
+        ret, frame = cap.read()
+        if not ret: break
+    elif mode == 2:
+        try:
+            frame = frame_queue.get(timeout=1)
+        except queue.Empty:
+            continue
 
     frame = cv2.flip(frame, 1)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -175,6 +237,8 @@ while cap.isOpened():
     frame = draw_korean_text(frame, f"입력: {words_text}", (10, 80), font_size=40, color=(255, 235, 59), max_width=frame.shape[1] - 20)
     
     if generated_sentence:
+        if mode == 2:
+            asyncio.run_coroutine_threadsafe(sentence_queue.put(generated_sentence), livekit_loop)
         frame = draw_korean_text(frame, f"결과: {generated_sentence}", (10, 130), font_size=40, color=(129, 212, 250), max_width=frame.shape[1] - 20)
 
     cv2.imshow("Sign Language Translator", frame)
@@ -188,6 +252,7 @@ while cap.isOpened():
         prediction_result = ("", 0.0)
         print("🔄 문장 및 단어 목록이 초기화되었습니다.")
 
-cap.release()
+if mode == 1:
+    cap.release()
 cv2.destroyAllWindows()
 
