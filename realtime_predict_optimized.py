@@ -124,6 +124,7 @@ def predict_gesture(sequence_data):
 
 # --- LiveKit 루프 ---
 frame_queue = queue.Queue(maxsize=1)
+livekit_task = None
 sentence_queue = asyncio.Queue()
 livekit_loop = None
 
@@ -143,9 +144,15 @@ async def receive_from_livekit():
 
     @room.on("track_subscribed")
     def on_track_subscribed(track, publication, participant):
+        global livekit_task
         if participant.identity == "deaf" and track.kind == rtc.TrackKind.KIND_VIDEO:
             video_stream = rtc.VideoStream(track)
-            asyncio.create_task(receive_frames(video_stream))
+            livekit_task = asyncio.create_task(receive_frames(video_stream))
+
+    @room.on("participant_disconnected")
+    def on_participant_disconnected(participant):
+        if participant.identity == "deaf":
+            livekit_task.cancel()
 
     await room.connect(SERVER_URL, ACCESS_TOKEN)
     asyncio.create_task(send_message_loop(room))
