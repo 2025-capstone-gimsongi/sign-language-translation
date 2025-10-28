@@ -13,12 +13,10 @@ import torch
 from transformers import T5ForConditionalGeneration, T5TokenizerFast as T5Tokenizer
 
 # --- 💡 설정값 (가장 중요한 부분!) ---
-SERVER_URL = "ws://127.0.0.1:7880"
+SERVER_URL = "ws://127.0.0.1:7880" # sfu 서버 ip 주소 대입
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2aWRlbyI6eyJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZSwicm9vbSI6ImRldi1yb29tIiwiY2FuUHVibGlzaCI6ZmFsc2UsImNhblN1YnNjcmliZSI6dHJ1ZSwiY2FuUHVibGlzaERhdGEiOnRydWV9LCJzdWIiOiJzZXJ2ZXIiLCJpc3MiOiJkZXZrZXkiLCJuYmYiOjE3NTY4NjEyMDAsImV4cCI6NDkxMjUzNDgwMH0.gc8l4G3MtNqUUOICS-f5X1QL_v71eDkuuuKhx8C4wbA"
-# [수정] 데이터 추가 후 새로 훈련한 최신 모델 경로로 변경합니다.
-MODEL_PATH = "models/gesture_lstm_model_dual_v4.h5" 
-# [수정] preprocess 스크립트에서 저장한 파일명과 동일하게 맞춥니다.
-ENCODER_PATH = "processed_lstm/label_encoder_lstm_dual.pkl"
+MODEL_PATH = "models/gesture_lstm_model_dual_v4.h5" # lstm 모델 파일 경로 대입
+ENCODER_PATH = "processed_lstm/label_encoder_lstm_dual.pkl" # preprocess/*.pkl 파일 경로 대입
 T5_MODEL_PATH = "./my_finetuned_t5_model"
 FRAMES_PER_SEQUENCE = 30 
 FONT_PATH = "C:/Windows/Fonts/malgun.ttf"
