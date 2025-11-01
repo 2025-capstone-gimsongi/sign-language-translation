@@ -8,6 +8,7 @@ from collections import deque
 from livekit import proto_video, rtc
 from PIL import ImageFont, ImageDraw, Image
 import queue
+import sys
 import threading
 import torch
 from transformers import T5ForConditionalGeneration, T5TokenizerFast as T5Tokenizer
@@ -43,7 +44,7 @@ except Exception as e:
     print(f"❌ 모델 로드 중 오류 발생: {e}")
     print("   - preprocess와 train 스크립트가 먼저 실행되었는지 확인해주세요.")
     print(f"   - 필요한 파일: {MODEL_PATH}, {ENCODER_PATH}")
-    exit()
+    sys.exit(1)
 
 
 mp_hands = mp.solutions.hands
@@ -175,12 +176,12 @@ def run_livekit_background():
 mode = int(input("모드 선택 (1: 로컬 카메라, 2: 서버 모니터링) - "))
 if not 1 <= mode <= 2:
     print("잘못된 입력입니다.")
-    exit()
+    sys.exit(1)
 
 if mode == 1:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌ 카메라를 열 수 없습니다."); exit()
+        print("❌ 카메라를 열 수 없습니다."); sys.exit(1)
 elif mode == 2:
     threading.Thread(target=run_livekit_background, daemon=True).start()
 
