@@ -164,6 +164,10 @@ async def receive_from_livekit():
             livekit_task.cancel()
             livekit_task = None
 
+    @room.on("disconnected")
+    def on_disconnected(reason):
+        connection_failed.set()
+
     try:
         await room.connect(SERVER_URL, ACCESS_TOKEN, rtc.RoomOptions(auto_subscribe=False))
     except rtc.ConnectError:
