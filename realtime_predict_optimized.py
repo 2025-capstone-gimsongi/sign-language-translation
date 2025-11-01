@@ -122,12 +122,15 @@ def predict_gesture(sequence_data):
     is_predicting = False
 
 # --- LiveKit 루프 ---
+room = None
 frame_queue = queue.Queue(maxsize=1)
 livekit_task = None
+connection_failed = threading.Event()
 sentence_queue = asyncio.Queue()
 livekit_loop = None
 
 async def receive_from_livekit():
+    global room
     room = rtc.Room()
 
     async def receive_frames(stream):
@@ -153,7 +156,12 @@ async def receive_from_livekit():
         if participant.identity == "deaf":
             livekit_task.cancel()
 
-    await room.connect(SERVER_URL, ACCESS_TOKEN)
+    try:
+        await room.connect(SERVER_URL, ACCESS_TOKEN)
+    except rtc.ConnectError:
+        connection_failed.set()
+        return
+
     asyncio.create_task(send_message_loop(room))
     await asyncio.Future()
 
@@ -192,6 +200,10 @@ while True:
         ret, frame = cap.read()
         if not ret: break
     elif mode == 2:
+        if connection_failed.is_set():
+            print("SFU 서버에 연결할 수 없습니다.")
+            sys.exit(1)
+
         try:
             frame = frame_queue.get(timeout=1)
         except queue.Empty:
@@ -260,5 +272,7 @@ while True:
 
 if mode == 1:
     cap.release()
+elif mode == 2 and room is not None:
+    asyncio.run_coroutine_threadsafe(room.disconnect(), livekit_loop).result()
 cv2.destroyAllWindows()
 
