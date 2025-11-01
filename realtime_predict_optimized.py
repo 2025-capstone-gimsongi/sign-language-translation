@@ -144,23 +144,37 @@ async def receive_from_livekit():
                 frame_queue.get_nowait()
             frame_queue.put_nowait(image)
 
+    @room.on("track_published")
+    def on_track_published(publication, participant):
+        if participant.identity == "deaf":
+            publication.set_subscribed(True)
+
     @room.on("track_subscribed")
     def on_track_subscribed(track, publication, participant):
         global livekit_task
         if participant.identity == "deaf" and track.kind == rtc.TrackKind.KIND_VIDEO:
             video_stream = rtc.VideoStream(track)
             livekit_task = asyncio.create_task(receive_frames(video_stream))
+        else:
+            publication.set_subscribed(False)
 
     @room.on("participant_disconnected")
     def on_participant_disconnected(participant):
-        if participant.identity == "deaf":
+        if participant.identity == "deaf" and livekit_task is not None:
             livekit_task.cancel()
+            livekit_task = None
 
     try:
-        await room.connect(SERVER_URL, ACCESS_TOKEN)
+        await room.connect(SERVER_URL, ACCESS_TOKEN, rtc.RoomOptions(auto_subscribe=False))
     except rtc.ConnectError:
         connection_failed.set()
         return
+
+    if "deaf" in room.remote_participants:
+        for publication in room.remote_participants["deaf"].track_publications.values():
+            if publication.kind == rtc.TrackKind.KIND_VIDEO:
+                publication.set_subscribed(True)
+                break
 
     asyncio.create_task(send_message_loop(room))
     await asyncio.Future()
