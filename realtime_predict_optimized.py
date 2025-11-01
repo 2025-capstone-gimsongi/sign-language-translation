@@ -12,10 +12,11 @@ import sys
 import threading
 import torch
 from transformers import T5ForConditionalGeneration, T5TokenizerFast as T5Tokenizer
+from livekit_auth import create_token
 
 # --- 💡 설정값 (가장 중요한 부분!) ---
 SERVER_URL = "ws://127.0.0.1:7880" # sfu 서버 ip 주소 대입
-ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2aWRlbyI6eyJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZSwicm9vbSI6ImRldi1yb29tIiwiY2FuUHVibGlzaCI6ZmFsc2UsImNhblN1YnNjcmliZSI6dHJ1ZSwiY2FuUHVibGlzaERhdGEiOnRydWV9LCJzdWIiOiJzZXJ2ZXIiLCJpc3MiOiJkZXZrZXkiLCJuYmYiOjE3NTY4NjEyMDAsImV4cCI6NDkxMjUzNDgwMH0.gc8l4G3MtNqUUOICS-f5X1QL_v71eDkuuuKhx8C4wbA"
+ACCESS_TOKEN = create_token("ksl_worker", "dev-room")
 MODEL_PATH = "models/gesture_lstm_model_dual_v4.h5" # lstm 모델 파일 경로 대입
 ENCODER_PATH = "processed_lstm/label_encoder_lstm_dual.pkl" # preprocess/*.pkl 파일 경로 대입
 T5_MODEL_PATH = "./my_finetuned_t5_model"
@@ -146,13 +147,13 @@ async def receive_from_livekit():
 
     @room.on("track_published")
     def on_track_published(publication, participant):
-        if participant.identity == "deaf":
+        if participant.identity == "ksl":
             publication.set_subscribed(True)
 
     @room.on("track_subscribed")
     def on_track_subscribed(track, publication, participant):
         global livekit_task
-        if participant.identity == "deaf" and track.kind == rtc.TrackKind.KIND_VIDEO:
+        if participant.identity == "ksl" and track.kind == rtc.TrackKind.KIND_VIDEO:
             video_stream = rtc.VideoStream(track)
             livekit_task = asyncio.create_task(receive_frames(video_stream))
         else:
@@ -160,7 +161,7 @@ async def receive_from_livekit():
 
     @room.on("participant_disconnected")
     def on_participant_disconnected(participant):
-        if participant.identity == "deaf" and livekit_task is not None:
+        if participant.identity == "ksl" and livekit_task is not None:
             livekit_task.cancel()
             livekit_task = None
 
@@ -174,8 +175,8 @@ async def receive_from_livekit():
         connection_failed.set()
         return
 
-    if "deaf" in room.remote_participants:
-        for publication in room.remote_participants["deaf"].track_publications.values():
+    if "ksl" in room.remote_participants:
+        for publication in room.remote_participants["ksl"].track_publications.values():
             if publication.kind == rtc.TrackKind.KIND_VIDEO:
                 publication.set_subscribed(True)
                 break
@@ -188,7 +189,7 @@ async def send_message_loop(room):
         sentence = await sentence_queue.get()
         data = sentence.encode()
 
-        await room.local_participant.publish_data(data, destination_identities=["hearing"])
+        await room.local_participant.publish_data(data, destination_identities=["asl"])
 
 def run_livekit_background():
     global livekit_loop
