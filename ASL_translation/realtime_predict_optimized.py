@@ -282,7 +282,7 @@ while True:
             asyncio.run_coroutine_threadsafe(sentence_queue.put(generated_sentence), livekit_loop)
         frame = draw_korean_text(frame, f"결과: {generated_sentence}", (10, 130), font_size=40, color=(129, 212, 250), max_width=frame.shape[1] - 20)
 
-    cv2.imshow("Sign Language Translator", frame)
+    cv2.imshow("ASL Translator", frame)
     key = cv2.waitKey(1) & 0xFF
 
     if key == ord('q'):
