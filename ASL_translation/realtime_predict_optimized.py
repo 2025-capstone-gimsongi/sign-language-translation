@@ -56,8 +56,13 @@ if mproc.current_process().name == "MainProcess":
     frame_buffer = deque(maxlen=FRAMES_PER_SEQUENCE)
 
 # --- 한글 텍스트 출력 함수 ---
+_font_cache = {}
+
 def draw_korean_text(img, text, position, font_size=32, color=(255, 255, 255), max_width=None):
-    font = ImageFont.truetype(FONT_PATH, font_size)
+    if font_size not in _font_cache:
+        _font_cache[font_size] = ImageFont.truetype(FONT_PATH, font_size)
+    font = _font_cache[font_size]
+
     img_pil = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(img_pil)
     x, y = position
@@ -217,8 +222,7 @@ if __name__ == "__main__":
 
     t5_input_queue = mproc.Queue()
     t5_output_queue = mproc.Queue()
-    t5_process = mproc.Process(target=t5_worker, args=(t5_input_queue, t5_output_queue, T5_MODEL_PATH), daemon=True)
-    t5_process.start()
+    mproc.Process(target=t5_worker, args=(t5_input_queue, t5_output_queue, T5_MODEL_PATH), daemon=True).start()
 
     mode = int(input("모드 선택 (1: 로컬 카메라, 2: 서버 모니터링) - "))
     if not 1 <= mode <= 2:
