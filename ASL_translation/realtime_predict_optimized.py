@@ -32,6 +32,7 @@ PREDICTION_INTERVAL = 3
 # --- 전역 변수 ---
 prediction_result = ("", 0.0)
 sentence_words = []
+sentence_lock = threading.Lock()
 generated_sentence = ""
 is_predicting = False
 
@@ -280,7 +281,8 @@ while True:
     color = (0, 255, 0) if conf >= CONFIDENCE_THRESHOLD else (255, 0, 0)
     frame = draw_korean_text(frame, feedback_text, (10, 30), font_size=32, color=color)
 
-    words_text = " ".join(sentence_words)
+    with sentence_lock:
+        words_text = " ".join(sentence_words)
     frame = draw_korean_text(frame, f"입력: {words_text}", (10, 80), font_size=40, color=(255, 235, 59), max_width=frame.shape[1] - 20)
     
     if generated_sentence:
