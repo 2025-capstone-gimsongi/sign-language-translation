@@ -284,11 +284,12 @@ if __name__ == "__main__":
             threading.Thread(target=predict_gesture, args=(sequence_data,), daemon=True).start()
 
         try:
-            generated_sentence = t5_output_queue.get_nowait()
+            current_sentence = t5_output_queue.get_nowait()
             if mode == 2:
-                asyncio.run_coroutine_threadsafe(sentence_queue.put(generated_sentence), livekit_loop)
+                asyncio.run_coroutine_threadsafe(sentence_queue.put(current_sentence), livekit_loop)
+            generated_sentence = current_sentence
         except queue.Empty:
-            pass
+            current_sentence = generated_sentence
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
@@ -303,8 +304,8 @@ if __name__ == "__main__":
             words_text = " ".join(sentence_words)
         frame = draw_korean_text(frame, f"입력: {words_text}", (10, 80), font_size=40, color=(255, 235, 59), max_width=frame.shape[1] - 20)
         
-        if generated_sentence:
-            frame = draw_korean_text(frame, f"결과: {generated_sentence}", (10, 130), font_size=40, color=(129, 212, 250), max_width=frame.shape[1] - 20)
+        if current_sentence:
+            frame = draw_korean_text(frame, f"결과: {current_sentence}", (10, 130), font_size=40, color=(129, 212, 250), max_width=frame.shape[1] - 20)
 
         cv2.imshow("KSL Translator", frame)
         key = cv2.waitKey(1) & 0xFF
