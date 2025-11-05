@@ -82,22 +82,28 @@ def draw_korean_text(img, text, position, font_size=32, color=(255, 255, 255), m
     return cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
 
 # --- T5 문장 생성 스레드 함수 ---
+t5_lock = threading.Lock()
+
 def generate_sentence_with_t5(words):
     global generated_sentence
     if not words: return
     
-    prompt = f"문장 생성: {', '.join(words)}"
-    print(f"📝 T5 입력: '{prompt}'")
+    with t5_lock:
+        prompt = f"문장 생성: {', '.join(words)}"
+        print(f"📝 T5 입력: '{prompt}'")
+        
+        inputs = tokenizer(prompt, return_tensors="pt")
+        with torch.no_grad():
+            outputs = t5_model.generate(
+                inputs.input_ids, max_length=64, num_beams=5, early_stopping=True,
+                repetition_penalty=2.0, no_repeat_ngram_size=2
+            )
+        result_sentence = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        generated_sentence = result_sentence
+        print(f"✅ T5 생성 문장: {generated_sentence}")
     
-    inputs = tokenizer(prompt, return_tensors="pt")
-    with torch.no_grad():
-        outputs = t5_model.generate(
-            inputs.input_ids, max_length=64, num_beams=5, early_stopping=True,
-            repetition_penalty=2.0, no_repeat_ngram_size=2
-        )
-    result_sentence = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    generated_sentence = result_sentence
-    print(f"✅ T5 생성 문장: {generated_sentence}")
+    if mode == 2:
+        asyncio.run_coroutine_threadsafe(sentence_queue.put(generated_sentence), livekit_loop)
 
 # --- LSTM 제스처 예측 스레드 함수 ---
 def predict_gesture(sequence_data):
@@ -274,8 +280,6 @@ while True:
     frame = draw_korean_text(frame, f"입력: {words_text}", (10, 80), font_size=40, color=(255, 235, 59), max_width=frame.shape[1] - 20)
     
     if generated_sentence:
-        if mode == 2:
-            asyncio.run_coroutine_threadsafe(sentence_queue.put(generated_sentence), livekit_loop)
         frame = draw_korean_text(frame, f"결과: {generated_sentence}", (10, 130), font_size=40, color=(129, 212, 250), max_width=frame.shape[1] - 20)
 
     cv2.imshow("KSL Translator", frame)
