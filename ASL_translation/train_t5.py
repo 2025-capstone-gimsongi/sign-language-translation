@@ -15,7 +15,7 @@ MODEL_NAME = "paust/pko-t5-base"
 model = T5ForConditionalGeneration.from_pretrained(MODEL_NAME)
 tokenizer = T5Tokenizer.from_pretrained(MODEL_NAME)
 
-DATASET_PATH = "./train_dataset.json"
+DATASET_PATH = "ASL_translation/train_dataset.json"
 with open(DATASET_PATH, 'r', encoding='utf-8') as f:
     raw_data = json.load(f)
 
@@ -69,7 +69,7 @@ print("▶ 수동 조기 종료 기능으로 모델 미세 조정을 시작합�
 best_eval_loss = float("inf")
 patience_counter = 0
 early_stopping_patience = 3 # 3번 연속 성능 향상이 없으면 중단
-SAVE_PATH = "./my_finetuned_t5_model"
+SAVE_PATH = "ASL_translation/my_finetuned_t5_model"
 
 for epoch in range(MAX_EPOCHS):
     print(f"--- Epoch {epoch + 1}/{MAX_EPOCHS} ---")
