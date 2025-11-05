@@ -6,7 +6,7 @@ from keras.models import Sequential, load_model
 from keras.layers import LSTM, Dense, Dropout
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, TensorBoard
 from sklearn.model_selection import StratifiedShuffleSplit
-import matplotlib.pyplot as plt # 🌟 시각화를 위한 라이브러리 추가
+import matplotlib.pyplot as plt
 
 # --- ⚙️ 설정: 이 스위치로 모드를 변경하세요 ---
 # True: model_save_path에 있는 모델을 불러와서 이어서 학습하거나, 구조를 변경하여 전이 학습합니다.
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt # 🌟 시각화를 위한 라이브러리 추�
 CONTINUE_TRAINING = False
 # -----------------------------------------
 
-# 🌟 [추가] 학습 과정을 그래프로 그려주는 함수
+# 학습 과정을 그래프로 그려주는 함수
 def plot_training_history(history, model_save_path):
     """훈련 결과를 받아 정확도와 손실 그래프를 그리고 저장합니다."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
@@ -41,7 +41,7 @@ def plot_training_history(history, model_save_path):
     save_path = os.path.splitext(model_save_path)[0] + '_history.png'
     plt.savefig(save_path)
     print(f"📊 학습 과정 그래프가 '{save_path}'에 저장되었습니다.")
-    # plt.show() # 주피터 노트북 등에서 바로 보려면 이 줄의 주석을 해제하세요.
+    # plt.show() # 노트북 환경 확인용
 
 def train_lstm_model_dual(X_path, y_path, model_save_path):
     """
@@ -114,7 +114,7 @@ def train_lstm_model_dual(X_path, y_path, model_save_path):
     tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
 
     print("\n▶ 모델 학습을 시작합니다.")
-    history = model.fit( # 🌟 훈련 기록을 'history' 변수에 저장
+    history = model.fit(
         X_train, y_train,
         epochs=100,
         batch_size=16,
@@ -122,18 +122,14 @@ def train_lstm_model_dual(X_path, y_path, model_save_path):
         callbacks=[checkpoint, early_stopping, reduce_lr, tensorboard_callback]
     )
 
-    # --- 👇 여기가 이번에 추가된 부분입니다 👇 ---
     print("\n▶ 최종 모델 성능을 평가합니다.")
-    # 훈련 중 저장된 최적의 모델을 다시 불러옵니다.
     best_model = load_model(model_save_path)
-    # 검증 데이터로 최종 성능 평가
     loss, accuracy = best_model.evaluate(X_val, y_val, verbose=0)
     print(f"   - 최종 검증 손실 (Final Validation Loss): {loss:.4f}")
     print(f"   - 최종 검증 정확도 (Final Validation Accuracy): {accuracy:.4f}")
 
     # 학습 과정 시각화 함수 호출
     plot_training_history(history, model_save_path)
-    # --- 👆 여기까지가 추가된 부분입니다 👆 ---
 
     print(f"\n✅ 양손 LSTM 모델 학습 및 모든 과정 완료: {model_save_path}")
 

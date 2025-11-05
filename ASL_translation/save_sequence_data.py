@@ -4,7 +4,7 @@ import cv2
 import mediapipe as mp
 import csv
 import os
-import numpy as np # 넘파이 라이브러리 추가
+import numpy as np
 
 def collect_hand_landmark_samples(
     label,
@@ -50,14 +50,12 @@ def collect_hand_landmark_samples(
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = hands.process(rgb)
 
-            # --- 👇 여기가 핵심 변경 부분입니다 👇 ---
-
             # 두 손 데이터 초기화
             hand_data = {"Left": [0.0] * 63, "Right": [0.0] * 63}
             hand_detected = {"Left": False, "Right": False}
 
             if results.multi_hand_landmarks and results.multi_handedness:
-                # 1. 먼저 모든 랜드마크의 절대 좌표를 수집합니다.
+                # 1. 모든 랜드마크의 절대 좌표 수집
                 for hand_landmarks, hand_handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
                     hand_label = hand_handedness.classification[0].label  # 'Left' or 'Right'
                     
@@ -70,7 +68,7 @@ def collect_hand_landmark_samples(
 
                     mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                 
-                # 2. 손목 기준 상대 좌표로 정규화합니다.
+                # 2. 손목 기준 상대 좌표로 정규화
                 normalized_left_coords = [0.0] * 63
                 normalized_right_coords = [0.0] * 63
 
@@ -88,10 +86,9 @@ def collect_hand_landmark_samples(
                     relative_right = right_hand_np - right_wrist
                     normalized_right_coords = relative_right.flatten().tolist()
                 
-                # 3. 정규화된 좌표를 하나의 프레임으로 합칩니다.
+                # 3. 정규화된 좌표를 하나의 프레임으로
                 one_frame = normalized_left_coords + normalized_right_coords
 
-                # --- 👆 여기까지가 핵심 변경 부분입니다 👆 ---
 
                 frame_buffer.append(one_frame)
 
@@ -122,7 +119,7 @@ def collect_hand_landmark_samples(
 
 
 if __name__ == "__main__":
-    label = "Hello"  # 테스트할 라벨
+    label = "Hello"
     collect_hand_landmark_samples(
         label=f"{label}",
         save_path=f"ASL_translation/data/{label}_sequences.csv"

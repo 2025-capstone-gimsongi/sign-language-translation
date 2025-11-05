@@ -16,12 +16,12 @@ from transformers import T5ForConditionalGeneration, T5TokenizerFast as T5Tokeni
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from livekit_auth import create_token
 
-# --- 💡 설정값 (가장 중요한 부분!) ---
+# --- 설정값 ---
 SERVER_URL = "ws://172.25.23.6:7880"
 ACCESS_TOKEN = create_token("asl_worker", "dev-room")
-# [수정] 데이터 추가 후 새로 훈련한 최신 모델 경로로 변경합니다.
+# 데이터 추가 후 새로 훈련한 최신 모델 경로
 MODEL_PATH = "models/gesture_lstm_model_dual_v4.h5" 
-# [수정] preprocess 스크립트에서 저장한 파일명과 동일하게 맞춥니다.
+# preprocess 스크립트에서 저장한 파일명과 동일하게
 ENCODER_PATH = "processed_lstm/label_encoder_lstm_dual.pkl"
 T5_MODEL_PATH = "./my_finetuned_t5_model"
 FRAMES_PER_SEQUENCE = 30 
@@ -29,7 +29,7 @@ FONT_PATH = "C:/Windows/Fonts/malgun.ttf"
 CONFIDENCE_THRESHOLD = 0.75
 PREDICTION_INTERVAL = 3
 
-# --- 💡 전역 변수 ---
+# --- 전역 변수 ---
 prediction_result = ("", 0.0)
 sentence_words = []
 generated_sentence = ""
