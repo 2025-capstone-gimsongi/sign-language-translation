@@ -247,7 +247,7 @@ if __name__ == "__main__":
         elif mode == 2:
             if connection_failed.is_set():
                 print("SFU 서버에 연결할 수 없습니다.")
-                sys.exit(1)
+                break
 
             try:
                 frame = frame_queue.get(timeout=1)
