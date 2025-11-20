@@ -166,17 +166,15 @@ async def receive_from_livekit():
 
     @room.on("track_published")
     def on_track_published(publication, participant):
-        if participant.identity == "asl":
+        if participant.identity == "asl" and publication.kind == rtc.TrackKind.KIND_VIDEO:
             publication.set_subscribed(True)
 
     @room.on("track_subscribed")
     def on_track_subscribed(track, publication, participant):
         global livekit_task
-        if participant.identity == "asl" and track.kind == rtc.TrackKind.KIND_VIDEO:
+        if track.kind == rtc.TrackKind.KIND_VIDEO:
             video_stream = rtc.VideoStream(track)
             livekit_task = asyncio.create_task(receive_frames(video_stream))
-        else:
-            publication.set_subscribed(False)
 
     @room.on("participant_disconnected")
     def on_participant_disconnected(participant):
