@@ -6,7 +6,7 @@ import numpy as np
 from keras.models import load_model
 import joblib
 from collections import deque
-from livekit import proto_video, rtc
+from livekit import rtc
 from PIL import ImageFont, ImageDraw, Image
 import os
 import queue
@@ -19,7 +19,7 @@ from livekit_auth import create_token
 SERVER_URL = "ws://172.25.23.6:7880"
 ACCESS_TOKEN = create_token("asl_worker", "dev-room")
 # 데이터 추가 후 새로 훈련한 최신 모델 경로
-MODEL_PATH = "models/gesture_lstm_model_dual_v4.h5" 
+MODEL_PATH = "models/gesture_lstm_model_dual_v2.h5" 
 # preprocess 스크립트에서 저장한 파일명과 동일하게
 ENCODER_PATH = "processed_lstm/label_encoder_lstm_dual.pkl"
 T5_MODEL_PATH = "./my_finetuned_t5_model"
@@ -154,8 +154,8 @@ async def receive_from_livekit():
     room = rtc.Room()
 
     async def receive_frames(stream):
-        async for frame in stream:
-            converted_frame = frame.convert(proto_video.VideoBufferType.RGB24)
+        async for event in stream:
+            converted_frame = event.frame.convert(rtc.VideoBufferType.RGB24)
             image = np.frombuffer(converted_frame.data, dtype=np.uint8)
             image = image.reshape((converted_frame.height, converted_frame.width, 3))
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
@@ -180,6 +180,7 @@ async def receive_from_livekit():
 
     @room.on("participant_disconnected")
     def on_participant_disconnected(participant):
+        global livekit_task
         if participant.identity == "asl" and livekit_task is not None:
             livekit_task.cancel()
             livekit_task = None
@@ -218,6 +219,7 @@ def run_livekit_background():
 
 # --- 메인 루프 ---
 if __name__ == "__main__":
+    mproc.freeze_support()
     mproc.set_start_method("spawn", force=True)
 
     t5_input_queue = mproc.Queue()
@@ -238,6 +240,7 @@ if __name__ == "__main__":
 
     print("▶ 실시간 수어 번역을 시작합니다. ('q': 종료, '스페이스바': 초기화)")
     frame_count = 0
+    last_frame = np.zeros((640, 480, 3), dtype=np.uint8)
 
     while True:
         if mode == 1:
@@ -250,9 +253,10 @@ if __name__ == "__main__":
                 break
 
             try:
-                frame = frame_queue.get(timeout=1)
+                frame = frame_queue.get(timeout=0.1)
+                last_frame = frame
             except queue.Empty:
-                continue
+                frame = last_frame
 
         frame = cv2.flip(frame, 1)
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
