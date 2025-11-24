@@ -1,7 +1,7 @@
 # test_model.py
 from transformers import T5ForConditionalGeneration, T5TokenizerFast
 
-MODEL_PATH = "ASL_translation/my_finetuned_t5_model"
+MODEL_PATH = MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/my_finetuned_t5_model"
 
 try:
     tokenizer = T5TokenizerFast.from_pretrained(MODEL_PATH)
