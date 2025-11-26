@@ -1,5 +1,3 @@
-# 데이터 전처리, 모델 학습, 인식용 카메라 통합 실행 코드
-
 import subprocess
 import sys
 

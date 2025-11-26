@@ -1,10 +1,8 @@
-# 손 인식 학습을 위한 데이터 수집 코드
-
 import cv2
 import mediapipe as mp
 import csv
 import os
-import numpy as np # 넘파이 라이브러리 추가
+import numpy as np
 
 def collect_hand_landmark_samples(
     label,
@@ -30,7 +28,7 @@ def collect_hand_landmark_samples(
     with open(save_path, 'a', newline='') as f:
         writer = csv.writer(f)
 
-        # CSV 헤더가 없으면 생성 (헤더 내용은 동일)
+        # CSV 헤더가 없으면 생성
         if not file_exists:
             header = []
             for i in range(frames_per_sample):
@@ -50,16 +48,14 @@ def collect_hand_landmark_samples(
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = hands.process(rgb)
 
-            # --- 👇 여기가 핵심 변경 부분입니다 👇 ---
-
             # 두 손 데이터 초기화
             hand_data = {"Left": [0.0] * 63, "Right": [0.0] * 63}
             hand_detected = {"Left": False, "Right": False}
 
             if results.multi_hand_landmarks and results.multi_handedness:
-                # 1. 먼저 모든 랜드마크의 절대 좌표를 수집합니다.
+                # 1. 랜드마크 절대좌표 수집
                 for hand_landmarks, hand_handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-                    hand_label = hand_handedness.classification[0].label  # 'Left' or 'Right'
+                    hand_label = hand_handedness.classification[0].label
                     
                     coords = []
                     for lm in hand_landmarks.landmark:
@@ -70,28 +66,27 @@ def collect_hand_landmark_samples(
 
                     mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                 
-                # 2. 손목 기준 상대 좌표로 정규화합니다.
+                # 손목 기준 상대 좌표 정규화
                 normalized_left_coords = [0.0] * 63
                 normalized_right_coords = [0.0] * 63
 
                 # 왼손이 감지되었을 경우
                 if hand_detected["Left"]:
                     left_hand_np = np.array(hand_data["Left"]).reshape(21, 3)
-                    left_wrist = left_hand_np[0] # 0번 랜드마크가 손목
+                    left_wrist = left_hand_np[0] # 0번 : 손목
                     relative_left = left_hand_np - left_wrist
                     normalized_left_coords = relative_left.flatten().tolist()
 
                 # 오른손이 감지되었을 경우
                 if hand_detected["Right"]:
                     right_hand_np = np.array(hand_data["Right"]).reshape(21, 3)
-                    right_wrist = right_hand_np[0] # 0번 랜드마크가 손목
+                    right_wrist = right_hand_np[0] # 0번 : 손목
                     relative_right = right_hand_np - right_wrist
                     normalized_right_coords = relative_right.flatten().tolist()
                 
-                # 3. 정규화된 좌표를 하나의 프레임으로 합칩니다.
+                # 정규화된 좌표를 하나의 프레임으로
                 one_frame = normalized_left_coords + normalized_right_coords
 
-                # --- 👆 여기까지가 핵심 변경 부분입니다 👆 ---
 
                 frame_buffer.append(one_frame)
 
@@ -101,7 +96,7 @@ def collect_hand_landmark_samples(
                     writer.writerow(sample)
                     sample_count += 1
                     frame_buffer = []
-                    print(f"✔ 저장됨: 샘플 {sample_count}/{samples_per_video}")
+                    print(f"저장: 샘플 {sample_count}/{samples_per_video}")
 
                     print("⏸ 다음 샘플을 수집하려면 아무 키나 누르세요...")
                     while True:

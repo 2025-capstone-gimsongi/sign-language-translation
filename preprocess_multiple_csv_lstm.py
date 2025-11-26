@@ -1,5 +1,3 @@
-# 수집된 데이터 전처리 코드
-
 import pandas as pd
 import numpy as np
 import os
@@ -8,12 +6,7 @@ from tensorflow.keras.utils import to_categorical
 import joblib
 
 def preprocess_dual_hand_csv_lstm(csv_folder, save_dir):
-    """
-    여러 CSV 파일들을 읽어 LSTM 모델 학습을 위한 데이터셋(.npy)과
-    LabelEncoder(출석부, .pkl)를 생성합니다.
-    """
     all_X, all_y = [], []
-    print("▶ 데이터 전처리 작업을 시작합니다...")
 
     for file in sorted(os.listdir(csv_folder)): # 파일 이름 순으로 정렬하여 일관성 유지
         if not file.endswith(".csv"):
@@ -48,13 +41,12 @@ def preprocess_dual_hand_csv_lstm(csv_folder, save_dir):
             print(f"   - WARNING: '{file}' 파일에 데이터가 없습니다. 건너뜁니다.")
             continue
         
-        # [수정] 각 시퀀스(행)가 3780개의 특징을 가지는지 확인
+        # 각 시퀀스(행)가 3780개의 특징을 가지는지 확인
         if X.shape[1] != 3780: 
             print(f"   - WARNING: '{file}' 파일의 열 개수가 3780이 아닙니다 (현재: {X.shape[1]}). 건너뜁니다.")
             continue
 
-        # [수정] 데이터를 (시퀀스 수, 프레임 수, 특징 수) 형태로 재구성
-        # 각 행이 하나의 완성된 시퀀스 데이터라고 가정합니다.
+        # 데이터를 (시퀀스 수, 프레임 수, 특징 수) 형태로 재구성
         num_sequences = X.shape[0]
         X = X.reshape(num_sequences, 30, 126) # (len(df), 30, 126)과 동일
         y = [label] * num_sequences
@@ -70,26 +62,21 @@ def preprocess_dual_hand_csv_lstm(csv_folder, save_dir):
     X_all = np.concatenate(all_X, axis=0)
     y_all = np.array(all_y)
 
-    # --- ▼ 여기가 가장 중요한 부분입니다 ▼ ---
-    
-    # 1. LabelEncoder(출석부)를 생성하고 모든 단어로 학습시킵니다.
     label_encoder = LabelEncoder()
     y_encoded = label_encoder.fit_transform(y_all)
 
-    # 2. 학습이 완료된 '최신 출석부'를 파일로 저장합니다.
     os.makedirs(save_dir, exist_ok=True)
     encoder_path = os.path.join(save_dir, "label_encoder_lstm_dual.pkl")
     joblib.dump(label_encoder, encoder_path)
     
-    print("\n✅ Label Encoder(출석부)가 성공적으로 저장되었습니다.")
+    print("\n✅ Label Encoder가 성공적으로 저장되었습니다.")
     print(f"   - 저장 경로: {encoder_path}")
     print(f"   - 총 단어 개수: {len(label_encoder.classes_)}")
     print(f"   - 단어 목록: {label_encoder.classes_}")
 
-    # 3. 레이블을 원-핫 인코딩으로 변환합니다.
+    # 원-핫 인코딩
     y_onehot = to_categorical(y_encoded)
 
-    # 4. 최종 데이터셋을 .npy 파일로 저장합니다.
     np.save(os.path.join(save_dir, "X_seq_lstm_dual.npy"), X_all)
     np.save(os.path.join(save_dir, "y_seq_lstm_dual.npy"), y_onehot)
 

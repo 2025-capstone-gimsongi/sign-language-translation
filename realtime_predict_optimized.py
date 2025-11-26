@@ -13,7 +13,7 @@ import sys
 import threading
 from livekit_auth import create_token
 
-# --- 💡 설정값 (가장 중요한 부분!) ---
+# 설정값
 SERVER_URL = "ws://127.0.0.1:7880" # sfu 서버 ip 주소 대입
 ACCESS_TOKEN = create_token("ksl_worker", "dev-room")
 MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_lstm/models/gesture_lstm_model_dual_v2.h5" # lstm 모델 파일 경로 대입
@@ -24,14 +24,14 @@ FONT_PATH = "C:/Windows/Fonts/malgun.ttf"
 CONFIDENCE_THRESHOLD = 0.75
 PREDICTION_INTERVAL = 3
 
-# --- 💡 전역 변수 ---
+
 prediction_result = ("", 0.0)
 sentence_words = []
 sentence_lock = threading.Lock()
 generated_sentence = ""
 is_predicting = False
 
-# --- 모델 및 리소스 로드 ---
+# 모델 및 리소스 로드
 if mproc.current_process().name == "MainProcess":
     print("▶ 모델과 리소스 로드 중...")
     try:
@@ -40,10 +40,7 @@ if mproc.current_process().name == "MainProcess":
         print("✅ LSTM 모델 로드 완료!")
     except Exception as e:
         print(f"❌ 모델 로드 중 오류 발생: {e}")
-        print("   - preprocess와 train 스크립트가 먼저 실행되었는지 확인해주세요.")
-        print(f"   - 필요한 파일: {MODEL_PATH}, {ENCODER_PATH}")
         sys.exit(1)
-
 
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5)
@@ -51,9 +48,9 @@ if mproc.current_process().name == "MainProcess":
 
     frame_buffer = deque(maxlen=FRAMES_PER_SEQUENCE)
 
-# --- 한글 텍스트 출력 함수 ---
-_font_cache = {}
 
+# 한글 텍스트 출력 함수
+_font_cache = {}
 def draw_korean_text(img, text, position, font_size=32, color=(255, 255, 255), max_width=None):
     if font_size not in _font_cache:
         _font_cache[font_size] = ImageFont.truetype(FONT_PATH, font_size)
@@ -85,7 +82,7 @@ def draw_korean_text(img, text, position, font_size=32, color=(255, 255, 255), m
 
     return cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
 
-# --- T5 문장 생성 프로세스 함수 ---
+# T5 문장 생성 프로세스 함수
 def t5_worker(input_queue, output_queue, t5_model_path):
     import torch
     from transformers import T5ForConditionalGeneration, T5TokenizerFast as T5Tokenizer
@@ -114,7 +111,7 @@ def t5_worker(input_queue, output_queue, t5_model_path):
         output_queue.put(result_sentence)
         print(f"✅ T5 생성 문장: {result_sentence}")
 
-# --- LSTM 제스처 예측 스레드 함수 ---
+# LSTM 제스처 예측 스레드 함수
 def predict_gesture(sequence_data):
     global prediction_result, is_predicting, sentence_words, generated_sentence
     
