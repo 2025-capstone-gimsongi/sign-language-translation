@@ -22,7 +22,7 @@ ACCESS_TOKEN = create_token("asl_worker", "dev-room")
 MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/ASL_lstm/models/gesture_lstm_model_dual_v2.h5" 
 # preprocess 스크립트에서 저장한 파일명과 동일하게
 ENCODER_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/ASL_lstm/processed_lstm/label_encoder_lstm_dual.pkl"
-T5_MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_t5/my_finetuned_t5_model"
+T5_MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/ASL_t5/my_finetuned_t5_model"
 FRAMES_PER_SEQUENCE = 30 
 FONT_PATH = "C:/Windows/Fonts/malgun.ttf"
 CONFIDENCE_THRESHOLD = 0.75

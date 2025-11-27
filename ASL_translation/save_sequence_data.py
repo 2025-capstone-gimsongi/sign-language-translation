@@ -18,7 +18,7 @@ def collect_hand_landmark_samples(
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         print("❌ 카메라를 열 수 없습니다.")
         return
@@ -119,7 +119,7 @@ def collect_hand_landmark_samples(
 
 
 if __name__ == "__main__":
-    label = "Hello"
+    label = "why"
     collect_hand_landmark_samples(
         label=f"{label}",
         save_path=f"ASL_translation/data/{label}_sequences.csv"
