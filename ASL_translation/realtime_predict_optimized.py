@@ -16,10 +16,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from livekit_auth import create_token
 
 # --- 설정값 ---
-SERVER_URL = "ws://172.25.23.6:7880"
+SERVER_URL = "ws://127.0.0.1:7880"
 ACCESS_TOKEN = create_token("asl_worker", "dev-room")
 # 데이터 추가 후 새로 훈련한 최신 모델 경로
-MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/ASL_lstm/models/gesture_lstm_model_dual_v4.h5" 
+MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/ASL_lstm/models/gesture_lstm_model_dual_small_v1.h5" 
 # preprocess 스크립트에서 저장한 파일명과 동일하게
 ENCODER_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/ASL_lstm/processed_lstm/label_encoder_lstm_dual.pkl"
 T5_MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/ASL_t5/my_finetuned_t5_model"
