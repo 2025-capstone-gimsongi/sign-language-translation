@@ -14,13 +14,13 @@ import threading
 from livekit_auth import create_token
 
 # 설정값
-SERVER_URL = "ws://127.0.0.1:7880" # sfu 서버 ip 주소 대입
+SERVER_URL = "ws://172.25.23.6:7880" # sfu 서버 ip 주소 대입
 ACCESS_TOKEN = create_token("ksl_worker", "dev-room")
 MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_lstm/models/gesture_lstm_model_dual_v2.h5" # lstm 모델 파일 경로 대입
 ENCODER_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_lstm/processed_lstm/label_encoder_lstm_dual.pkl" # preprocess/*.pkl 파일 경로 대입
 T5_MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_t5/my_finetuned_t5_model"
 FRAMES_PER_SEQUENCE = 30 
-FONT_PATH = "C:/Windows/Fonts/malgun.ttf"
+FONT_PATH = "/System/Library/Fonts/AppleSDGothicNeo.ttc"
 CONFIDENCE_THRESHOLD = 0.75
 PREDICTION_INTERVAL = 3
 
