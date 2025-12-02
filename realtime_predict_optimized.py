@@ -201,7 +201,8 @@ async def receive_from_livekit():
         print(f"[DEBUG] track_published: participant={participant.identity}, "
               f"kind={publication.kind}, source={publication.source}")
         if participant.identity == "ksl" and publication.kind == rtc.TrackKind.KIND_VIDEO:
-            print("[DEBUG] ksl 참가자의 비디오 트랙 publish 감지 → auto_subscribe 설정 전 개발자 로직")
+            publication.set_subscribed(True)
+            print("[DEBUG] ksl 참가자의 비디오 트랙 publish 감지 → set_subscribed(True)")
 
     @room.on("track_subscribed")
     def on_track_subscribed(track, publication, participant):
@@ -209,7 +210,7 @@ async def receive_from_livekit():
         print(f"[DEBUG] track_subscribed: participant={participant.identity}, "
               f"track.kind={track.kind}, publication.source={publication.source}")
         if track.kind == rtc.TrackKind.KIND_VIDEO:
-            print(f"[DEBUG] {participant.identity} 비디오 트랙 구독 시작")
+            print(f"[DEBUG] {participant.identity} 비디오 트랙 수신 시작")
             video_stream = rtc.VideoStream(track)
             livekit_task = asyncio.create_task(receive_frames(video_stream, participant.identity))
 
