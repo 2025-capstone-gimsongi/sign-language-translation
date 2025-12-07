@@ -12,11 +12,14 @@ import queue
 import sys
 import threading
 from livekit_auth import create_token
+from PyQt5.QtWidgets import QApplication, QLabel
+from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtCore import Qt
 
 # 설정값
 SERVER_URL = "ws://127.0.0.1:7880"  # sfu 서버 ip 주소 대입
 ACCESS_TOKEN = create_token("ksl_worker", "dev-room")
-MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_lstm/models/gesture_lstm_model_dual_v2.h5"  # lstm 모델 파일 경로 대입
+MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_lstm/models/gesture_lstm_model_dual_v4.h5"  # lstm 모델 파일 경로 대입
 ENCODER_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_lstm/processed_lstm/label_encoder_lstm_dual.pkl"  # preprocess/*.pkl 파일 경로 대입
 T5_MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_t5/my_finetuned_t5_model"
 FRAMES_PER_SEQUENCE = 30
@@ -122,30 +125,25 @@ def t5_worker(input_queue, output_queue, t5_model_path):
 # LSTM 제스처 예측 스레드 함수
 def predict_gesture(sequence_data):
     global prediction_result, is_predicting, sentence_words, generated_sentence
-
-    print("[DEBUG] LSTM 예측 시작 (sequence_data shape:", sequence_data.shape, ")")
+    
     prediction = model.predict(sequence_data, verbose=0)
     confidence = np.max(prediction)
     predicted_index = np.argmax(prediction)
     predicted_label = label_encoder.inverse_transform([predicted_index])[0]
-    print(f"[DEBUG] LSTM 예측 결과: label={predicted_label}, confidence={confidence:.4f}")
-
+    
     prediction_result = (predicted_label, confidence)
-
+    
     if confidence >= CONFIDENCE_THRESHOLD and (not sentence_words or sentence_words[-1] != predicted_label):
         if predicted_label == "OK":
-            print("[DEBUG] 'OK' 제스처 감지 → T5 입력 큐로 단어 리스트 전송")
             if sentence_words:
-                print(f"[DEBUG] 현재 sentence_words: {sentence_words}")
                 t5_input_queue.put(list(sentence_words))
                 sentence_words.clear()
         else:
             generated_sentence = ""
             sentence_words.append(predicted_label)
             print(f"➕ 단어 추가: {predicted_label} (현재 리스트: {sentence_words})")
-
+            
     is_predicting = False
-    print("[DEBUG] LSTM 예측 종료")
 
 # --- LiveKit 루프 ---
 room = None
@@ -201,6 +199,7 @@ async def receive_from_livekit():
         print(f"[DEBUG] track_published: participant={participant.identity}, "
               f"kind={publication.kind}, source={publication.source}")
         if participant.identity == "ksl" and publication.kind == rtc.TrackKind.KIND_VIDEO:
+            publication.set_subscribed(True)
             print("[DEBUG] ksl 참가자의 비디오 트랙 publish 감지 → auto_subscribe 설정 전 개발자 로직")
 
     @room.on("track_subscribed")
@@ -267,6 +266,11 @@ def run_livekit_background():
 
 # --- 메인 루프 ---
 if __name__ == "__main__":
+    app = QApplication([])
+    qt_label = QLabel()
+    qt_label.setWindowTitle("KSL Translator")
+    qt_label.resize(960, 720)
+    qt_label.show()
     mproc.freeze_support()
     mproc.set_start_method("spawn", force=True)
 
@@ -282,7 +286,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if mode == 1:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
         if not cap.isOpened():
             print("❌ 카메라를 열 수 없습니다.")
             sys.exit(1)
@@ -397,7 +401,15 @@ if __name__ == "__main__":
                 max_width=frame.shape[1] - 20,
             )
 
-        cv2.imshow("KSL Translator", frame)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb.shape
+        bytes_per_line = w * ch
+
+        qimg = QImage(rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        scaled = qimg.scaled(960, 720, Qt.KeepAspectRatio)
+        qt_label.setPixmap(QPixmap.fromImage(scaled))
+        app.processEvents()
+
         key = cv2.waitKey(1) & 0xFF
 
         if key == ord("q"):

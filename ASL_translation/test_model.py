@@ -1,7 +1,7 @@
 # test_model.py
 from transformers import T5ForConditionalGeneration, T5TokenizerFast
 
-MODEL_PATH = MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/my_finetuned_t5_model"
+MODEL_PATH = MODEL_PATH = "/Users/kyungrim/Library/CloudStorage/GoogleDrive-20221999@edu.hanbat.ac.kr/내 드라이브/2025캡스톤프로젝트/KSL_t5/my_finetuned_t5_model"
 
 try:
     tokenizer = T5TokenizerFast.from_pretrained(MODEL_PATH)
@@ -12,7 +12,7 @@ except Exception as e:
     print("👉 1~3단계를 다시 확인해보세요. 특히 이전 폴더 삭제와 재학습이 완료되었는지 확인이 필요합니다.")
     exit()
 
-prompt = ""
+prompt = "나 너 좋아하다 많이"
 print(f"📝 테스트 입력: '{prompt}'")
 
 # 토큰화 및 문장 생성

@@ -119,7 +119,7 @@ def collect_hand_landmark_samples(
 
 
 if __name__ == "__main__":
-    label = "name"
+    label = "고양이"
     collect_hand_landmark_samples(
         label=f"{label}",
         save_path=f"ASL_translation/data/{label}_sequences.csv"
