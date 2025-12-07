@@ -208,7 +208,7 @@ async def receive_from_livekit():
         print(f"[DEBUG] track_subscribed: participant={participant.identity}, "
               f"track.kind={track.kind}, publication.source={publication.source}")
         if track.kind == rtc.TrackKind.KIND_VIDEO:
-            print(f"[DEBUG] {participant.identity} 비디오 트랙 구독 시작")
+            print(f"[DEBUG] {participant.identity} 비디오 트랙 수신 시작")
             video_stream = rtc.VideoStream(track)
             livekit_task = asyncio.create_task(receive_frames(video_stream, participant.identity))
 
